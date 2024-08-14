@@ -4,6 +4,7 @@ import ProductModal from "../components/ProductModal";
 import Cart from "../components/Cart";
 import { fetchProducts } from "../services/productService";
 import toast, { Toaster } from "react-hot-toast";
+import Spinner from "../components/Spinner";
 
 const ProductListing = () => {
   const [products, setProducts] = useState([]);
@@ -13,12 +14,19 @@ const ProductListing = () => {
   const [sortOption, setSortOption] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProducts()
-      .then((data) => {
+    const loadProducts = async () => {
+      try {
+        const data = await fetchProducts();
         setProducts(data);
-      })
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
   }, []);
 
   const handleSearch = (e) => {
@@ -47,7 +55,7 @@ const ProductListing = () => {
 
   const handleAddToCart = (product) => {
     setCartItems((prevCartItems) => [...prevCartItems, product]);
-    toast.success('Item added!');
+    toast.success("Item added!");
   };
 
   const handleRemoveFromCart = (index) => {
@@ -55,7 +63,7 @@ const ProductListing = () => {
       prevCartItems.filter((_, i) => i !== index)
     );
 
-    toast.success("item removed!")
+    toast.success("item removed!");
   };
 
   // Apply search, filter, and sort logic to products
@@ -145,27 +153,31 @@ const ProductListing = () => {
       </div>
 
       {/* Product Listing and Cart */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3">
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={() => handleAddToCart(product)}
-                  onSeeDetails={() => handleProductClick(product)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="font-medium text-gray-700 text-center mt-8">
-              No products found!
-            </p>
-          )}
+      {loading ? (
+        <Spinner />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3">
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={() => handleAddToCart(product)}
+                    onSeeDetails={() => handleProductClick(product)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="font-medium text-gray-700 text-center mt-8">
+                No products found!
+              </p>
+            )}
+          </div>
+          <Cart cartItems={cartItems} onRemove={handleRemoveFromCart} />
         </div>
-        <Cart cartItems={cartItems} onRemove={handleRemoveFromCart} />
-      </div>
+      )}
 
       {/* Product Modal */}
       <ProductModal product={selectedProduct} onClose={handleCloseModal} />
