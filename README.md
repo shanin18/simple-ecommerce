@@ -11,6 +11,10 @@ A simple e-commerce product listing page built with React.js, Vite, Tailwind CSS
 - **Responsive Design:** Fully responsive layout for mobile, tablet, and desktop views.
 - **Product Modal:** View detailed product information in a modal.
 - **Cart Functionality:** Add products to a cart and remove items from it.
+- **Pagination:** Add products to a cart and remove items from it.
+- **View Modes:** Toggle between grid and list views.
+- **Light/Dark Mode:** Toggle between light and dark modes.
+- **Unit Testing:** Ensure code quality with unit tests using React Testing Library.
 
 ## Technologies
 
@@ -31,7 +35,6 @@ A simple e-commerce product listing page built with React.js, Vite, Tailwind CSS
 
    ```bash
    git clone https://github.com/shanin18/simple-ecommerce
-
    cd e-commerce-product-listing
    ```
 
@@ -39,16 +42,13 @@ A simple e-commerce product listing page built with React.js, Vite, Tailwind CSS
 
    ```bash
    Using npm:
-
    npm install
    ```
 3. **Start the Development Server**
 
    ```bash
    Using npm:
-
    npm run dev
-
    Open your browser and navigate to http://localhost:5173 to see the application.
    ```
 
@@ -60,6 +60,9 @@ A simple e-commerce product listing page built with React.js, Vite, Tailwind CSS
 - **View Product Details:** Click the "See Details" button on a product card to view more information in a modal.
 - **Add to Cart:** Click the "Add to Cart" button to add items to your cart.
 - **View Cart:** Click on the cart icon to view and manage cart items.
+- **Pagination:** Navigate through different pages of product listings.
+- **View Modes:** Toggle between grid and list views.
+- **Toggle Theme:** Switch between light and dark modes.
 
  
 ### Contributing

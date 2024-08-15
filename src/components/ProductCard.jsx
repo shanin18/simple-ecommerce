@@ -2,7 +2,10 @@ import React from "react";
 
 const ProductCard = ({ product, onAddToCart, onSeeDetails }) => {
   return (
-    <div className="border rounded p-4">
+    <div
+      className="border rounded p-4"
+      data-aos="fade-up"
+    >
       <div className="flex flex-col justify-between min-h-full">
         <div>
           <img
@@ -11,7 +14,7 @@ const ProductCard = ({ product, onAddToCart, onSeeDetails }) => {
             className="w-full h-40 object-cover mb-4"
           />
           <h2 className="text-lg font-bold">{product.title}</h2>
-          <p className="text-gray-600">${product.price}</p>
+          <p>${product.price}</p>
         </div>
         <div className="mt-2 flex flex-wrap justify-between gap-3">
           <button

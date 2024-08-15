@@ -1,20 +1,31 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import ProductModal from "../components/ProductModal";
 import Cart from "../components/Cart";
-import { fetchProducts } from "../services/productService";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import Spinner from "../components/Spinner";
+import Filter from "../components/Filter";
+import SearchBar from "../components/SearchBar";
+import Pagination from "../components/Pagination";
+import { fetchProducts, fetchCategories } from "../services/productService";
+import { BsGrid1X2, BsList } from "react-icons/bs";
 
 const ProductListing = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedPriceRange, setSelectedPriceRange] = useState([0, 1000]);
+  const [selectedPriceRange, setSelectedPriceRange] = useState({
+    min: 0,
+    max: 1000,
+  });
   const [sortOption, setSortOption] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState("grid");
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -26,23 +37,40 @@ const ProductListing = () => {
       }
     };
 
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        toast.error("Error fetching categories:", error);
+      }
+    };
+
     loadProducts();
+    loadCategories();
   }, []);
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const handleSearch = (query) => {
+    setSearchTerm(query);
+    setCurrentPage(1);
   };
 
-  const handleCategoryChange = (e) => {
-    setSelectedCategory(e.target.value);
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
   };
 
-  const handlePriceRangeChange = (min, max) => {
-    setSelectedPriceRange([min, max]);
+  const handlePriceRangeChange = (priceRange) => {
+    setSelectedPriceRange({
+      min: Number(priceRange.min) || 0,
+      max: Number(priceRange.max) || 1000,
+    });
+    setCurrentPage(1);
   };
 
-  const handleSortChange = (e) => {
-    setSortOption(e.target.value);
+  const handleSortChange = (value) => {
+    setSortOption(value);
+    setCurrentPage(1);
   };
 
   const handleProductClick = (product) => {
@@ -62,8 +90,7 @@ const ProductListing = () => {
     setCartItems((prevCartItems) =>
       prevCartItems.filter((_, i) => i !== index)
     );
-
-    toast.success("item removed!");
+    toast.success("Item removed!");
   };
 
   // Apply search, filter, and sort logic to products
@@ -76,8 +103,8 @@ const ProductListing = () => {
     )
     .filter(
       (product) =>
-        product.price >= selectedPriceRange[0] &&
-        product.price <= selectedPriceRange[1]
+        product.price >= selectedPriceRange.min &&
+        product.price <= selectedPriceRange.max
     )
     .sort((a, b) => {
       if (sortOption === "price-asc") return a.price - b.price;
@@ -87,99 +114,81 @@ const ProductListing = () => {
       return 0;
     });
 
+  // Pagination logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
+
   return (
     <div className="p-4">
-      {/* Search and Filters */}
-      <div className="flex flex-wrap flex-row items-center md:justify-between md:mb-4 gap-4">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="p-2 border rounded mb-2 md:mb-0 md:mr-4"
+      <SearchBar
+        searchQuery={searchTerm}
+        setSearchQuery={handleSearch}
+      />
+      <div className="flex justify-between lg:items-center flex-wrap gap-4">
+        {/* Search and Filters */}
+        <Filter
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={handleCategoryChange}
+          priceRange={selectedPriceRange}
+          setPriceRange={handlePriceRangeChange}
+          sortOption={sortOption}
+          setSortOption={handleSortChange}
         />
-        <select
-          onChange={handleCategoryChange}
-          className="p-2 border rounded mb-2 md:mb-0 md:mr-4"
+
+        {/* View Mode Toggle */}
+        <button
+          onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+          className="p-2 border rounded h-fit"
         >
-          <option value="">All Categories</option>
-          <option value="electronics">Electronics</option>
-          <option value="jewelery">Jewelery</option>
-          <option value="men's clothing">Men's Clothing</option>
-          <option value="women's clothing">Women's Clothing</option>
-        </select>
-        <select
-          onChange={handleSortChange}
-          className="p-2 border rounded mb-2 md:mb-0"
-        >
-          <option value="">Sort By</option>
-          <option value="price-asc">Price: Low to High</option>
-          <option value="price-desc">Price: High to Low</option>
-          <option value="name-asc">Name: A-Z</option>
-          <option value="name-desc">Name: Z-A</option>
-        </select>
+          {viewMode === "grid" ? <BsList /> : <BsGrid1X2 />}
+        </button>
       </div>
 
-      {/* Price Range Filter */}
-      <div className="flex flex-wrap gap-y-3 items-center mb-4">
-        <label className="mr-2">Price Range:</label>
-        <div>
-          <input
-            type="number"
-            value={selectedPriceRange[0]}
-            onChange={(e) =>
-              handlePriceRangeChange(
-                Number(e.target.value),
-                selectedPriceRange[1]
-              )
-            }
-            className="p-2 border rounded mr-2"
-            min="0"
-          />
-          <span className="mr-2">to</span>
-          <input
-            type="number"
-            value={selectedPriceRange[1]}
-            onChange={(e) =>
-              handlePriceRangeChange(
-                selectedPriceRange[0],
-                Number(e.target.value)
-              )
-            }
-            className="p-2 border rounded"
-            min="0"
-          />
-        </div>
-      </div>
-
-      {/* Product Listing and Cart */}
+      {/* Product Listing */}
       {loading ? (
         <Spinner />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className="lg:col-span-3">
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAddToCart={() => handleAddToCart(product)}
-                    onSeeDetails={() => handleProductClick(product)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="font-medium text-gray-700 text-center mt-8">
-                No products found!
-              </p>
-            )}
-          </div>
-          <Cart cartItems={cartItems} onRemove={handleRemoveFromCart} />
+        <div>
+          {currentProducts.length > 0 ? (
+            <div
+              className={`${
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                  : "space-y-4"
+              } gap-4 mt-8`}
+            >
+              {currentProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={() => handleAddToCart(product)}
+                  onSeeDetails={() => handleProductClick(product)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-lg text-center mt-8 w-full">
+              No products found!
+            </p>
+          )}
+
+          {/* Pagination */}
+          <Pagination
+            totalProducts={filteredProducts.length}
+            productsPerPage={productsPerPage}
+            currentPage={currentPage}
+            onPageChange={(pageNumber) => setCurrentPage(pageNumber)}
+          />
         </div>
       )}
 
-      {/* Product Modal */}
+      {/* Cart and Modal */}
+      <Cart cartItems={cartItems} onRemove={handleRemoveFromCart} />
       <ProductModal product={selectedProduct} onClose={handleCloseModal} />
     </div>
   );
